@@ -177,7 +177,6 @@ int main(int argc, char** argv) {
   // Scenarios::Scenario* scenarioptr;
 
   // if(scenarioName == "BathymetryDamBreakScenario") {
-  //   std::cout << "entered" << "\n";
   //   scenarioptr = new Scenarios::BathymetryDamBreakScenario();
   // } else if(scenarioName == "RadialDamBreakScenario") {
   //   scenarioptr = new Scenarios::RadialDamBreakScenario();
@@ -193,11 +192,9 @@ int main(int argc, char** argv) {
 
   // auto scenario = *scenarioptr;
 
-  // std::cout << "scen: " << scenarioName << "\n";
 
   Scenarios::RadialDamBreakScenario scenario;
 
-  std::cout << "scen2: " << scenario.getWaterHeight(500.0,500.0) << "\n";
 
 
   // Compute the size of a single cell
