@@ -141,11 +141,11 @@ int main(int argc, char** argv) {
 
   int         numberOfGridCellsX  = args.getArgument<int>("grid-size-x", 16);
   int         numberOfGridCellsY  = args.getArgument<int>("grid-size-y", 16);
-  std::string baseName            = args.getArgument<std::string>("output-basepath", "SWE");
+  // std::string baseName            = args.getArgument<std::string>("output-basepath", "SWE");
   int         numberOfCheckPoints = args.getArgument<int>(
     "number-of-checkpoints", 20
   ); //! Number of checkpoints for visualization (at each checkpoint in time, an output file is written).
-  std::string scenarioName        = args.getArgument<std::string>("scenario", "RadialDamBreakScenario");
+  // std::string scenarioName        = args.getArgument<std::string>("scenario", "RadialDamBreakScenario");
   float multiplier        = args.getArgument<float>("time", 1.0);
 
   // Print information about the grid
@@ -174,26 +174,29 @@ int main(int argc, char** argv) {
   Tools::Logger::logger.printNumberOfCellsPerProcess(nXLocal, nYLocal);
 
   // Create a scenario, default: RadialDamBreakScenario
-  Scenarios::Scenario* scenarioptr;
+  // Scenarios::Scenario* scenarioptr;
 
-  if(scenarioName == "BathymetryDamBreakScenario") {
-    std::cout << "entered" << "\n";
-    scenarioptr = new Scenarios::BathymetryDamBreakScenario();
-  } else if(scenarioName == "RadialDamBreakScenario") {
-    scenarioptr = new Scenarios::RadialDamBreakScenario();
-  } else if(scenarioName == "SeaAtRestScenario") {
-    scenarioptr = new Scenarios::SeaAtRestScenario();
-  } else if(scenarioName == "SplashingConeScenario") {
-    scenarioptr = new Scenarios::SplashingConeScenario();
-  } else if(scenarioName == "SplashingPoolScenario") {
-    scenarioptr = new Scenarios::SplashingPoolScenario();
-  }
-  //Add your own scenarios here 
+  // if(scenarioName == "BathymetryDamBreakScenario") {
+  //   std::cout << "entered" << "\n";
+  //   scenarioptr = new Scenarios::BathymetryDamBreakScenario();
+  // } else if(scenarioName == "RadialDamBreakScenario") {
+  //   scenarioptr = new Scenarios::RadialDamBreakScenario();
+  // } else if(scenarioName == "SeaAtRestScenario") {
+  //   scenarioptr = new Scenarios::SeaAtRestScenario();
+  // } else if(scenarioName == "SplashingConeScenario") {
+  //   scenarioptr = new Scenarios::SplashingConeScenario();
+  // } else if(scenarioName == "SplashingPoolScenario") {
+  //   scenarioptr = new Scenarios::SplashingPoolScenario();
+  // }
+  // //Add your own scenarios here 
 
 
-  Scenarios::Scenario scenario = *scenarioptr;
+  // auto scenario = *scenarioptr;
 
-  std::cout << "scen: " << scenarioName << "\n";
+  // std::cout << "scen: " << scenarioName << "\n";
+
+  Scenarios::RadialDamBreakScenario scenario;
+
   std::cout << "scen2: " << scenario.getWaterHeight(500.0,500.0) << "\n";
 
 
