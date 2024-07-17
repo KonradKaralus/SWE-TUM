@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
 
   int         numberOfGridCellsX  = args.getArgument<int>("grid-size-x", 16);
   int         numberOfGridCellsY  = args.getArgument<int>("grid-size-y", 16);
-  // std::string baseName            = args.getArgument<std::string>("output-basepath", "SWE");
+  std::string baseName            = args.getArgument<std::string>("output-basepath", "SWE");
   int         numberOfCheckPoints = args.getArgument<int>(
     "number-of-checkpoints", 20
   ); //! Number of checkpoints for visualization (at each checkpoint in time, an output file is written).
