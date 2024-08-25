@@ -40,7 +40,7 @@ RealType Scenarios::TUScenario::getWaterHeight(RealType x, RealType y) const {
 RealType Scenarios::TUScenario::getBathymetry([[maybe_unused]] RealType x, [[maybe_unused]] RealType y) const {
   auto idx = (int(round(x)) + x_len * int(round(y)));
 
-  std::cout << "Tried to get x,y:" << x << y << std::endl;
+  // std::cout << "Tried to get x,y:" << x << y << std::endl;
 
   auto byte = epd_bitmap_szenTU[int(floor(idx / 8))] & int(pow(2, idx % 8));
 
@@ -63,6 +63,6 @@ RealType Scenarios::TUScenario::getBoundaryPos(BoundaryEdge edge) const {
   } else if (edge == BoundaryEdge::Bottom) {
     return RealType(0.0);
   } else {
-    return RealType(1000.0);
+    return RealType(500.0);
   }
 }
