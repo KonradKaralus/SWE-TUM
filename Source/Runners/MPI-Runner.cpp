@@ -194,7 +194,7 @@ int main(int argc, char** argv) {
   // auto scenario = *scenarioptr;
 
 
-  Scenarios::RadialDamBreakScenario scenario;
+  Scenarios::TUScenario scenario;
 
 
 
