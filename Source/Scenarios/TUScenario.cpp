@@ -31,6 +31,8 @@
 
 #include <cmath>
 
+#include <iostream>
+
 RealType Scenarios::TUScenario::getWaterHeight(RealType x, RealType y) const {
   return RealType((sqrt((x - 500.0) * (x - 500.0) + (y - 250.0) * (y - 250.0)) < 100.0) ? 15.0 : 10.0);
 }
@@ -38,7 +40,9 @@ RealType Scenarios::TUScenario::getWaterHeight(RealType x, RealType y) const {
 RealType Scenarios::TUScenario::getBathymetry([[maybe_unused]] RealType x, [[maybe_unused]] RealType y) const {
   auto idx = (int(round(x)) + x_len * int(round(y)));
 
-  auto byte = epd_bitmap_szenTU[idx / 8] & idx % 8;
+  std::cout << "Tried to get x,y:" << x << y << std::endl;
+
+  auto byte = epd_bitmap_szenTU[int(floor(idx / 8))] & int(pow(2, idx % 8));
 
   if (byte != 0) {
     return 100.0;
