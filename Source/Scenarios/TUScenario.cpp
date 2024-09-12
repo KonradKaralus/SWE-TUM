@@ -30,22 +30,30 @@
 #include "TUScenario.hpp"
 
 #include <cmath>
-
 #include <iostream>
 
 RealType Scenarios::TUScenario::getWaterHeight(RealType x, RealType y) const {
-  return RealType((sqrt((x - 500.0) * (x - 500.0) + (y - 250.0) * (y - 250.0)) < 100.0) ? 15.0 : 10.0);
+  return RealType((sqrt((x - 500.0) * (x - 500.0) + (y - 250.0) * (y - 250.0)) < 100.0) ? 20.0 : 10.0);
 }
 
 RealType Scenarios::TUScenario::getBathymetry([[maybe_unused]] RealType x, [[maybe_unused]] RealType y) const {
-  auto idx = (int(round(x)) + x_len * int(round(y)));
+  if (x <= 1 || y <= 1) {
+    return 0;
+  }
 
-  // std::cout << "Tried to get x,y:" << x << y << std::endl;
+  x = floor(x - 1);
+  y = floor(y - 1);
 
-  auto byte = epd_bitmap_szenTU[int(floor(idx / 8))] & int(pow(2, idx % 8));
+  auto idx = (int(round(x)) + x_len * (500 - int(round(y))));
+  if (int(floor(idx / 8)) > 62000 || int(floor(idx / 8) < 100)) {
+    std::cout << "Tried to get x,y:" << x << ", " << y << std::endl;
+
+    std::cout << "t calc index: " << int(floor(idx / 8)) << std::endl;
+  }
+  auto byte = epd_bitmap_szenTU[int(floor(idx / 8))] & int(pow(2, 7 - (idx % 8)));
 
   if (byte != 0) {
-    return 100.0;
+    return 10.0;
   } else {
     return 0.0;
   }
@@ -53,7 +61,7 @@ RealType Scenarios::TUScenario::getBathymetry([[maybe_unused]] RealType x, [[may
 
 double Scenarios::TUScenario::getEndSimulationTime() const { return double(15); }
 
-BoundaryType Scenarios::TUScenario::getBoundaryType([[maybe_unused]] BoundaryEdge edge) const { return BoundaryType::Outflow; }
+BoundaryType Scenarios::TUScenario::getBoundaryType([[maybe_unused]] BoundaryEdge edge) const { return BoundaryType::Wall; }
 
 RealType Scenarios::TUScenario::getBoundaryPos(BoundaryEdge edge) const {
   if (edge == BoundaryEdge::Left) {
