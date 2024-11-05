@@ -30,6 +30,7 @@
 #pragma once
 
 #include "Scenario.hpp"
+#include "string.h"
 
 
 namespace Scenarios {

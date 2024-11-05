@@ -40,8 +40,6 @@ RealType Scenarios::CustomScenario::getWaterHeight(RealType x, RealType y) const
   return RealType((sqrt((x - 200.0) * (x - 200.0) + (y - 200.0) * (y - 200.0)) < 100.0) ? 20.0 : 10.0);
 }
 
-RealType Scenarios::CustomScenario::getBathymetry([[maybe_unused]] RealType x, [[maybe_unused]] RealType y) const {}
-
 double Scenarios::CustomScenario::getEndSimulationTime() const { return double(15); }
 
 BoundaryType Scenarios::CustomScenario::getBoundaryType([[maybe_unused]] BoundaryEdge edge) const { return BoundaryType::Wall; }
