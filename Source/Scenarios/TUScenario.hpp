@@ -52,8 +52,8 @@ namespace Scenarios {
 
 } // namespace Scenarios
 
-const unsigned int x_len = 1000;
-const unsigned int y_len = 500;
+// const unsigned int x_len = 1000;
+// const unsigned int y_len = 500;
 
 // 'szenTU', 1000x500px
 const unsigned char epd_bitmap_szenTU [] = {
