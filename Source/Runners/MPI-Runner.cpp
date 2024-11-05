@@ -41,7 +41,6 @@
 #include "Scenarios/SeaAtRestScenario.hpp"
 #include "Scenarios/SplashingConeScenario.hpp"
 #include "Scenarios/SplashingPoolScenario.hpp"
-#include "Scenarios/TUScenario.hpp"
 #include "Tools/Args.hpp"
 #include "Tools/Logger.hpp"
 #include "Tools/ProgressBar.hpp"
