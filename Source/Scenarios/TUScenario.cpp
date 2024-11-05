@@ -40,16 +40,10 @@ RealType Scenarios::TUScenario::getBathymetry([[maybe_unused]] RealType x, [[may
   if (x <= 1 || y <= 1) {
     return 0;
   }
-
   x = floor(x - 1);
   y = floor(y - 1);
 
-  auto idx = (int(round(x)) + x_len * (500 - int(round(y))));
-  if (int(floor(idx / 8)) > 62000 || int(floor(idx / 8) < 100)) {
-    std::cout << "Tried to get x,y:" << x << ", " << y << std::endl;
-
-    std::cout << "t calc index: " << int(floor(idx / 8)) << std::endl;
-  }
+  auto idx  = (int(round(x)) + x_len * (500 - int(round(y))));
   auto byte = epd_bitmap_szenTU[int(floor(idx / 8))] & int(pow(2, 7 - (idx % 8)));
 
   if (byte != 0) {

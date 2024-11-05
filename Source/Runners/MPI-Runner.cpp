@@ -36,6 +36,7 @@
 #include "Blocks/Block.hpp"
 #include "Blocks/WavePropagationBlock.hpp"
 #include "Scenarios/BathymetryDamBreakScenario.hpp"
+#include "Scenarios/CustomScenario.hpp"
 #include "Scenarios/RadialDamBreakScenario.hpp"
 #include "Scenarios/SeaAtRestScenario.hpp"
 #include "Scenarios/SplashingConeScenario.hpp"
@@ -126,6 +127,7 @@ int main(int argc, char** argv) {
   args.addOption("number-of-checkpoints", 'n', "Number of checkpoints to write output files");
   args.addOption("scenario", 's', "Name of scenario");
   args.addOption("time", 't', "Multiplier for end simulation time");
+  args.addOption("input-path", 'i', "Path for file.");
 
   Tools::Args::Result ret = args.parse(argc, argv, mpiRank == 0);
 
@@ -140,14 +142,18 @@ int main(int argc, char** argv) {
     break;
   }
 
-  int         numberOfGridCellsX  = args.getArgument<int>("grid-size-x", 16);
-  int         numberOfGridCellsY  = args.getArgument<int>("grid-size-y", 16);
-  std::string baseName            = args.getArgument<std::string>("output-basepath", "SWE");
-  int         numberOfCheckPoints = args.getArgument<int>(
-    "number-of-checkpoints", 20
-  ); //! Number of checkpoints for visualization (at each checkpoint in time, an output file is written).
+  int         numberOfGridCellsX = args.getArgument<int>("grid-size-x", 16);
+  int         numberOfGridCellsY = args.getArgument<int>("grid-size-y", 16);
+  std::string baseName           = args.getArgument<std::string>("output-basepath", "SWE");
+  int numberOfCheckPoints = args.getArgument<int>("number-of-checkpoints", 20); //! Number of checkpoints for visualization (at each checkpoint in time, an output file is written).
   // std::string scenarioName        = args.getArgument<std::string>("scenario", "RadialDamBreakScenario");
-  float multiplier        = args.getArgument<float>("time", 1.0);
+  float       multiplier = args.getArgument<float>("time", 1.0);
+  std::string inPath     = args.getArgument<std::string>("input-path", "");
+
+  if (inPath == "") {
+    exit(100);
+  }
+
 
   // Print information about the grid
   Tools::Logger::logger.printNumberOfCells(numberOfGridCellsX, numberOfGridCellsY);
@@ -163,12 +169,8 @@ int main(int argc, char** argv) {
 
   // Number of grid cells in x- and y-direction per process
   // Compute local number of cells for each block
-  int nXLocal  = (blockPositionX < numberOfBlocksX - 1)
-                   ? numberOfGridCellsX / numberOfBlocksX
-                   : numberOfGridCellsX - (numberOfBlocksX - 1) * (numberOfGridCellsX / numberOfBlocksX);
-  int nYLocal  = (blockPositionY < numberOfBlocksY - 1)
-                   ? numberOfGridCellsY / numberOfBlocksY
-                   : numberOfGridCellsY - (numberOfBlocksY - 1) * (numberOfGridCellsY / numberOfBlocksY);
+  int nXLocal = (blockPositionX < numberOfBlocksX - 1) ? numberOfGridCellsX / numberOfBlocksX : numberOfGridCellsX - (numberOfBlocksX - 1) * (numberOfGridCellsX / numberOfBlocksX);
+  int nYLocal = (blockPositionY < numberOfBlocksY - 1) ? numberOfGridCellsY / numberOfBlocksY : numberOfGridCellsY - (numberOfBlocksY - 1) * (numberOfGridCellsY / numberOfBlocksY);
   int nXNormal = numberOfGridCellsX / numberOfBlocksX;
   int nYNormal = numberOfGridCellsY / numberOfBlocksY;
 
@@ -188,21 +190,21 @@ int main(int argc, char** argv) {
   // } else if(scenarioName == "SplashingPoolScenario") {
   //   scenarioptr = new Scenarios::SplashingPoolScenario();
   // }
-  // //Add your own scenarios here 
+  // //Add your own scenarios here
 
 
   // auto scenario = *scenarioptr;
 
 
-  Scenarios::TUScenario scenario;
+  // Scenarios::TUScenario scenario;
+  Scenarios::CustomScenario scenario;
 
+  scenario.setPath(inPath);
 
 
   // Compute the size of a single cell
-  RealType cellSizeX = (scenario.getBoundaryPos(BoundaryEdge::Right) - scenario.getBoundaryPos(BoundaryEdge::Left))
-                       / numberOfGridCellsX;
-  RealType cellSizeY = (scenario.getBoundaryPos(BoundaryEdge::Top) - scenario.getBoundaryPos(BoundaryEdge::Bottom))
-                       / numberOfGridCellsY;
+  RealType cellSizeX = (scenario.getBoundaryPos(BoundaryEdge::Right) - scenario.getBoundaryPos(BoundaryEdge::Left)) / numberOfGridCellsX;
+  RealType cellSizeY = (scenario.getBoundaryPos(BoundaryEdge::Top) - scenario.getBoundaryPos(BoundaryEdge::Bottom)) / numberOfGridCellsY;
   Tools::Logger::logger.printCellSize(cellSizeX, cellSizeY);
 
   auto waveBlock = Blocks::Block::getBlockInstance(nXLocal, nYLocal, cellSizeX, cellSizeY);
@@ -308,18 +310,14 @@ int main(int argc, char** argv) {
   int topNeighborRank    = (blockPositionY < numberOfBlocksY - 1) ? mpiRank + 1 : MPI_PROC_NULL;
 
   // Print the MPI grid
-  Tools::Logger::logger.getDefaultOutputStream()
-    << "Neighbors: " << leftNeighborRank << " (left), " << rightNeighborRank << " (right), " << bottomNeighborRank
-    << " (bottom), " << topNeighborRank << " (top)" << std::endl;
+  Tools::Logger::logger.getDefaultOutputStream(
+  ) << "Neighbors: "
+    << leftNeighborRank << " (left), " << rightNeighborRank << " (right), " << bottomNeighborRank << " (bottom), " << topNeighborRank << " (top)" << std::endl;
 
   // Intially exchange ghost and copy layers
-  exchangeLeftRightGhostLayers(
-    leftNeighborRank, leftInflow, leftOutflow, rightNeighborRank, rightInflow, rightOutflow, mpiCol
-  );
+  exchangeLeftRightGhostLayers(leftNeighborRank, leftInflow, leftOutflow, rightNeighborRank, rightInflow, rightOutflow, mpiCol);
 
-  exchangeBottomTopGhostLayers(
-    bottomNeighborRank, bottomInflow, bottomOutflow, topNeighborRank, topInflow, topOutflow, mpiRow
-  );
+  exchangeBottomTopGhostLayers(bottomNeighborRank, bottomInflow, bottomOutflow, topNeighborRank, topInflow, topOutflow, mpiRow);
 
   Tools::ProgressBar progressBar(endSimulationTime, mpiRank);
 
@@ -331,18 +329,7 @@ int main(int argc, char** argv) {
 
   std::string fileName = Writers::generateBaseFileName(baseName, blockPositionX, blockPositionY);
   auto        writer   = Writers::Writer::createWriterInstance(
-    fileName,
-    waveBlock->getBathymetry(),
-    boundarySize,
-    nXLocal,
-    nYLocal,
-    cellSizeX,
-    cellSizeY,
-    blockPositionX * nXLocal,
-    blockPositionY * nYLocal,
-    originX,
-    originY,
-    0
+    fileName, waveBlock->getBathymetry(), boundarySize, nXLocal, nYLocal, cellSizeX, cellSizeY, blockPositionX * nXLocal, blockPositionY * nYLocal, originX, originY, 0
   );
 
   // Write zero time step
@@ -366,13 +353,9 @@ int main(int argc, char** argv) {
       Tools::Logger::logger.resetClockToCurrentTime("CPU-Communication");
 
       // Exchange ghost and copy layers
-      exchangeLeftRightGhostLayers(
-        leftNeighborRank, leftInflow, leftOutflow, rightNeighborRank, rightInflow, rightOutflow, mpiCol
-      );
+      exchangeLeftRightGhostLayers(leftNeighborRank, leftInflow, leftOutflow, rightNeighborRank, rightInflow, rightOutflow, mpiCol);
 
-      exchangeBottomTopGhostLayers(
-        bottomNeighborRank, bottomInflow, bottomOutflow, topNeighborRank, topInflow, topOutflow, mpiRow
-      );
+      exchangeBottomTopGhostLayers(bottomNeighborRank, bottomInflow, bottomOutflow, topNeighborRank, topInflow, topOutflow, mpiRow);
 
       // Reset the cpu clock
       Tools::Logger::logger.resetClockToCurrentTime("CPU");
@@ -404,9 +387,7 @@ int main(int argc, char** argv) {
       // Print the current simulation time
       progressBar.clear();
       Tools::Logger::logger.printSimulationTime(
-        simulationTime,
-        "[" + std::to_string(iterations) + "]: Simulation with max. global dt " + std::to_string(maxTimeStepWidthGlobal)
-          + " at time"
+        simulationTime, "[" + std::to_string(iterations) + "]: Simulation with max. global dt " + std::to_string(maxTimeStepWidthGlobal) + " at time"
       );
 
       // Update simulation time with time step width
@@ -421,9 +402,7 @@ int main(int argc, char** argv) {
     progressBar.update(simulationTime);
 
     // Write output
-    writer->writeTimeStep(
-      waveBlock->getWaterHeight(), waveBlock->getDischargeHu(), waveBlock->getDischargeHv(), simulationTime
-    );
+    writer->writeTimeStep(waveBlock->getWaterHeight(), waveBlock->getDischargeHu(), waveBlock->getDischargeHv(), simulationTime);
   }
 
   progressBar.clear();
@@ -495,96 +474,18 @@ void exchangeLeftRightGhostLayers(
   MPI_Status status;
 
   // Send to left, receive from the right:
-  MPI_Sendrecv(
-    leftOutflow->h.getData(),
-    1,
-    mpiCol,
-    leftNeighborRank,
-    1,
-    o_rightInflow->h.getData(),
-    1,
-    mpiCol,
-    rightNeighborRank,
-    1,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(leftOutflow->h.getData(), 1, mpiCol, leftNeighborRank, 1, o_rightInflow->h.getData(), 1, mpiCol, rightNeighborRank, 1, MPI_COMM_WORLD, &status);
 
-  MPI_Sendrecv(
-    leftOutflow->hu.getData(),
-    1,
-    mpiCol,
-    leftNeighborRank,
-    2,
-    o_rightInflow->hu.getData(),
-    1,
-    mpiCol,
-    rightNeighborRank,
-    2,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(leftOutflow->hu.getData(), 1, mpiCol, leftNeighborRank, 2, o_rightInflow->hu.getData(), 1, mpiCol, rightNeighborRank, 2, MPI_COMM_WORLD, &status);
 
-  MPI_Sendrecv(
-    leftOutflow->hv.getData(),
-    1,
-    mpiCol,
-    leftNeighborRank,
-    3,
-    o_rightInflow->hv.getData(),
-    1,
-    mpiCol,
-    rightNeighborRank,
-    3,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(leftOutflow->hv.getData(), 1, mpiCol, leftNeighborRank, 3, o_rightInflow->hv.getData(), 1, mpiCol, rightNeighborRank, 3, MPI_COMM_WORLD, &status);
 
   // Send to right, receive from the left:
-  MPI_Sendrecv(
-    rightOutflow->h.getData(),
-    1,
-    mpiCol,
-    rightNeighborRank,
-    4,
-    o_leftInflow->h.getData(),
-    1,
-    mpiCol,
-    leftNeighborRank,
-    4,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(rightOutflow->h.getData(), 1, mpiCol, rightNeighborRank, 4, o_leftInflow->h.getData(), 1, mpiCol, leftNeighborRank, 4, MPI_COMM_WORLD, &status);
 
-  MPI_Sendrecv(
-    rightOutflow->hu.getData(),
-    1,
-    mpiCol,
-    rightNeighborRank,
-    5,
-    o_leftInflow->hu.getData(),
-    1,
-    mpiCol,
-    leftNeighborRank,
-    5,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(rightOutflow->hu.getData(), 1, mpiCol, rightNeighborRank, 5, o_leftInflow->hu.getData(), 1, mpiCol, leftNeighborRank, 5, MPI_COMM_WORLD, &status);
 
-  MPI_Sendrecv(
-    rightOutflow->hv.getData(),
-    1,
-    mpiCol,
-    rightNeighborRank,
-    6,
-    o_leftInflow->hv.getData(),
-    1,
-    mpiCol,
-    leftNeighborRank,
-    6,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(rightOutflow->hv.getData(), 1, mpiCol, rightNeighborRank, 6, o_leftInflow->hv.getData(), 1, mpiCol, leftNeighborRank, 6, MPI_COMM_WORLD, &status);
 }
 
 void exchangeBottomTopGhostLayers(
@@ -599,94 +500,16 @@ void exchangeBottomTopGhostLayers(
   MPI_Status status;
 
   // Send to bottom, receive from the top:
-  MPI_Sendrecv(
-    bottomNeighborOutflow->h.getData(),
-    1,
-    mpiRow,
-    bottomNeighborRank,
-    11,
-    o_topNeighborInflow->h.getData(),
-    1,
-    mpiRow,
-    topNeighborRank,
-    11,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(bottomNeighborOutflow->h.getData(), 1, mpiRow, bottomNeighborRank, 11, o_topNeighborInflow->h.getData(), 1, mpiRow, topNeighborRank, 11, MPI_COMM_WORLD, &status);
 
-  MPI_Sendrecv(
-    bottomNeighborOutflow->hu.getData(),
-    1,
-    mpiRow,
-    bottomNeighborRank,
-    12,
-    o_topNeighborInflow->hu.getData(),
-    1,
-    mpiRow,
-    topNeighborRank,
-    12,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(bottomNeighborOutflow->hu.getData(), 1, mpiRow, bottomNeighborRank, 12, o_topNeighborInflow->hu.getData(), 1, mpiRow, topNeighborRank, 12, MPI_COMM_WORLD, &status);
 
-  MPI_Sendrecv(
-    bottomNeighborOutflow->hv.getData(),
-    1,
-    mpiRow,
-    bottomNeighborRank,
-    13,
-    o_topNeighborInflow->hv.getData(),
-    1,
-    mpiRow,
-    topNeighborRank,
-    13,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(bottomNeighborOutflow->hv.getData(), 1, mpiRow, bottomNeighborRank, 13, o_topNeighborInflow->hv.getData(), 1, mpiRow, topNeighborRank, 13, MPI_COMM_WORLD, &status);
 
   // Send to top, receive from the bottom:
-  MPI_Sendrecv(
-    topNeighborOutflow->h.getData(),
-    1,
-    mpiRow,
-    topNeighborRank,
-    14,
-    o_bottomNeighborInflow->h.getData(),
-    1,
-    mpiRow,
-    bottomNeighborRank,
-    14,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(topNeighborOutflow->h.getData(), 1, mpiRow, topNeighborRank, 14, o_bottomNeighborInflow->h.getData(), 1, mpiRow, bottomNeighborRank, 14, MPI_COMM_WORLD, &status);
 
-  MPI_Sendrecv(
-    topNeighborOutflow->hu.getData(),
-    1,
-    mpiRow,
-    topNeighborRank,
-    15,
-    o_bottomNeighborInflow->hu.getData(),
-    1,
-    mpiRow,
-    bottomNeighborRank,
-    15,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(topNeighborOutflow->hu.getData(), 1, mpiRow, topNeighborRank, 15, o_bottomNeighborInflow->hu.getData(), 1, mpiRow, bottomNeighborRank, 15, MPI_COMM_WORLD, &status);
 
-  MPI_Sendrecv(
-    topNeighborOutflow->hv.getData(),
-    1,
-    mpiRow,
-    topNeighborRank,
-    16,
-    o_bottomNeighborInflow->hv.getData(),
-    1,
-    mpiRow,
-    bottomNeighborRank,
-    16,
-    MPI_COMM_WORLD,
-    &status
-  );
+  MPI_Sendrecv(topNeighborOutflow->hv.getData(), 1, mpiRow, topNeighborRank, 16, o_bottomNeighborInflow->hv.getData(), 1, mpiRow, bottomNeighborRank, 16, MPI_COMM_WORLD, &status);
 }
